@@ -1,2 +1,2 @@
 boto3
-strands-decider
+strands-decider==0.2.0
