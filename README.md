@@ -275,7 +275,7 @@ CyberGate is intended as a **defensive AI-security project** for authorized and 
 
 CyberGate is an experimental project exploring policy-based control of AI agent behavior using Strands Decider and Amazon Bedrock.
 
-🔗 LinkedIn: Vishwanath Kunwar(🔗 LinkedIn: Vishwanath Kunwar)
+🔗 LinkedIn: (https://www.linkedin.com/in/vishwanath-kunwar/)
 ---
 
 ## 📄 License
