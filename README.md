@@ -1,18 +1,20 @@
-# CyberGate
+# 🛡️ CyberGate
 
-## AI Security Gateway with Strands Decider
+### AI Security Gateway powered by Strands Decider 2B + Amazon Bedrock
 
-CyberGate is an AI security gateway that makes a security-policy decision **before** an AI response is generated.
+CyberGate is an AI security gateway that makes a **security-policy decision before an AI response is generated**.
 
-It uses **Strands Decider 2B** to classify an incoming request into one of three policies:
+It uses **Strands Decider 2B** to classify an incoming request into one of three security policies:
 
-- **ALLOW** — the request is safe and permitted.
-- **LAB_ONLY** — the request should only be handled in an authorized practice lab.
-- **BLOCK** — the request should be blocked.
+- 🟢 **ALLOW** — the request is safe and permitted.
+- 🟡 **LAB_ONLY** — the request should only be handled in an authorized practice lab.
+- 🔴 **BLOCK** — the request should be blocked.
 
-The selected policy is then passed to the response layer powered by **Amazon Bedrock**.
+The selected policy is then enforced before the response layer powered by **Amazon Bedrock** is called.
 
-## Architecture
+---
+
+## 🧠 How CyberGate Works
 
 ```text
 User Request
@@ -20,35 +22,71 @@ User Request
      ▼
 Strands Decider 2B
      │
-     │ Security Policy Decision
      ▼
-ALLOW / LAB_ONLY / BLOCK
+Security Policy Decision
      │
-     ▼
-CyberGate Policy Enforcement
+     ├── ALLOW ──────► Amazon Bedrock
      │
-     ▼
-Amazon Bedrock
+     ├── LAB_ONLY ──► Amazon Bedrock
      │
-     ▼
-Safe Response
+     └── BLOCK ─────► Stop
+                          │
+                          ▼
+                     Safe Response
 ```
+
 ![CyberGate Architecture](docs/architecture.png)
-## Why Strands Decider?
 
-A general-purpose LLM is not always the best component for every decision.
+### Decision → Enforcement → Generation
 
-CyberGate uses Strands Decider for the small, structured decision:
+CyberGate separates the small structured security decision from AI response generation.
 
-> "What security policy should apply?"
+This allows the application to enforce a policy **before** the response model generates an answer.
 
-The Decider returns a selected option together with probabilities and confidence. CyberGate can then use that decision to control the response path.
+---
 
-This separates **decision-making** from **response generation**.
+## 🎯 Why Strands Decider?
 
-## Reusable Decision Pattern
+A general-purpose LLM does not need to make every decision.
 
-CyberGate includes a reusable Strands Decider `choice` pattern in:
+CyberGate uses Strands Decider for the structured security decision:
+
+> **What security policy should apply?**
+
+The Decider returns:
+
+- Selected policy
+- Probabilities
+- Confidence
+- Decision latency
+
+CyberGate then uses that decision to determine the response path.
+
+This creates a simple architecture:
+
+```text
+Decision
+   ↓
+Policy Enforcement
+   ↓
+Response Generation
+```
+
+---
+
+## 🔐 Security Policies
+
+| Policy | Meaning | Behavior |
+|---|---|---|
+| `ALLOW` | Request is safe and permitted. | Send to Amazon Bedrock |
+| `LAB_ONLY` | Request belongs in an authorized practice environment. | Send to Bedrock with lab-only policy |
+| `BLOCK` | Request is unauthorized or unsafe. | Block before Bedrock |
+
+---
+
+## ♻️ Reusable Decision Pattern
+
+CyberGate includes a reusable Strands Decider `choice` pattern:
 
 ```text
 decision_patterns/security_policy.py
@@ -56,20 +94,29 @@ decision_patterns/security_policy.py
 
 ### Decision
 
-**Question:**  
-What security policy should apply?
+**Question:**
+
+> What security policy should apply?
 
 ### Options
 
-| Option | Meaning |
-|---|---|
-| ALLOW | Request is safe and permitted. |
-| LAB_ONLY | Request belongs in an authorized practice lab. |
-| BLOCK | Request should be blocked. |
+```text
+ALLOW
+LAB_ONLY
+BLOCK
+```
 
-This pattern can be adapted to other AI security gateways and policy-enforcement systems.
+The complete reusable pattern is documented in:
 
-## Example Scenarios
+[`decision_patterns/README.md`](decision_patterns/README.md)
+
+and implemented in:
+
+[`decision_patterns/security_policy.py`](decision_patterns/security_policy.py)
+
+---
+
+## 🧪 Example Scenarios
 
 ### Safe request
 
@@ -77,7 +124,7 @@ This pattern can be adapted to other AI security gateways and policy-enforcement
 Explain how a firewall protects a web server.
 ```
 
-CyberGate can classify the request as:
+Example policy:
 
 ```text
 ALLOW
@@ -89,17 +136,19 @@ ALLOW
 I want to learn cybersecurity in an authorized practice lab.
 ```
 
-CyberGate can classify the request as:
+Example policy:
 
 ```text
 LAB_ONLY
 ```
 
-### Unsafe request
+### Unauthorized request
 
-Requests that could enable unauthorized access are handled conservatively by the gateway and response layer.
+Requests involving unauthorized access are handled conservatively and can be blocked before the response model is called.
 
-## Technology
+---
+
+## 🛠️ Technology
 
 - Python
 - Strands Decider 2B
@@ -107,10 +156,13 @@ Requests that could enable unauthorized access are handled conservatively by the
 - boto3
 - Strands ecosystem
 
-## Project Structure
+---
+
+## 📁 Project Structure
 
 ```text
 CyberGate/
+│
 ├── app/
 │   ├── bedrock_client.py
 │   ├── decider_client.py
@@ -119,22 +171,112 @@ CyberGate/
 │   └── policy.py
 │
 ├── decision_patterns/
+│   ├── README.md
 │   └── security_policy.py
 │
 ├── docs/
+│   └── architecture.png
 │
 ├── examples/
+│   ├── safe_request.txt
+│   ├── lab_request.txt
+│   └── blocked_request.txt
 │
 ├── .gitignore
-└── README.md
+├── LICENSE
+├── README.md
+└── requirements.txt
 ```
 
-## Security
+---
 
-Do not commit API keys, AWS credentials, or other secrets to the repository.
+## 🚀 Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/vishwanath-24/CyberGate.git
+cd CyberGate
+```
+
+### 2. Create a virtual environment
+
+```bash
+python -m venv .venv
+```
+
+Activate it on Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure credentials
+
+CyberGate requires credentials for:
+
+- Strands Decider service
+- Amazon Bedrock
+
+Store credentials using environment variables.
+
+**Never commit API keys or AWS credentials to GitHub.**
+
+### 5. Run CyberGate
+
+```bash
+python -m app.gateway
+```
+
+Enter a request when prompted.
+
+---
+
+## 📊 What CyberGate Demonstrates
+
+CyberGate demonstrates how a small structured decision model can act as a **policy gate** before an AI response model.
+
+The project focuses on:
+
+- Structured AI decisions
+- Policy enforcement
+- Defensive AI security
+- Confidence-aware handling
+- Separation of decision-making and generation
+- Reusable decision patterns
+
+---
+
+## 🔒 Security
+
+Do not commit:
+
+- API keys
+- AWS credentials
+- Access tokens
+- Private configuration
+- Other secrets
 
 Use environment variables for credentials.
 
-## Purpose
+CyberGate is intended as a **defensive AI-security project** for authorized and educational use.
 
-CyberGate is designed as a defensive AI-security project for demonstrating policy-based control of AI agent behavior.
+---
+
+## 👨‍💻 Author
+
+**Vishwanath Kunwar**
+
+CyberGate is an experimental project exploring policy-based control of AI agent behavior using Strands Decider and Amazon Bedrock.
+
+---
+
+## 📄 License
+
+This project is released under the license included in [`LICENSE`](LICENSE).
